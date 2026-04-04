@@ -1,0 +1,1 @@
+# CrateDigger core library

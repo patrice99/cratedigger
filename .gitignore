@@ -1,0 +1,20 @@
+# Environment
+.env
+
+# Airflow logs
+logs/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Data (too large for git)
+data/raw/
+data/processed/
+data/iceberg/
+
+# OS
+.DS_Store
+Thumbs.db
