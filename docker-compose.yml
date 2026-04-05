@@ -1,6 +1,6 @@
 ---
 # CrateDigger — local development stack
-# Airflow + Postgres only for now. Spark comes in Step 4.
+# Airflow + Postgres + Spark
 #
 # Usage:
 #   docker compose up          — start everything
@@ -66,17 +66,7 @@ services:
   # Docker marks it as "completed", which is expected and fine.
   airflow-init:
     <<: *airflow-common
-    command: >
-      bash -c "
-        airflow db migrate &&
-        airflow users create
-          --username admin
-          --password admin
-          --firstname CrateDigger
-          --lastname Admin
-          --role Admin
-          --email admin@cratedigger.local
-      "
+    command: bash -c "airflow db migrate && airflow users create --username admin --password admin --firstname CrateDigger --lastname Admin --role Admin --email admin@cratedigger.local"
     restart: "no"
 
   # ── Airflow scheduler ─────────────────────────────────────────────────────
@@ -107,6 +97,43 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+
+  # ── Spark master ──────────────────────────────────────────────────────────
+  # The cluster manager — receives job submissions, assigns work to workers.
+  # UI at http://localhost:8081 — shows running jobs, workers, memory usage.
+  spark-master:
+    image: apache/spark:latest
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+    environment:
+      SPARK_MASTER_HOST: spark-master
+      SPARK_MASTER_PORT: "7077"
+      SPARK_MASTER_WEBUI_PORT: "8081"
+    ports:
+      - "8081:8081"   # Spark UI
+      - "7077:7077"   # Spark job submission port — Airflow submits jobs here
+    volumes:
+      - ./spark_jobs:/opt/spark_jobs        # Our PySpark scripts
+      - ./data:/opt/data                    # Shared data folder — Spark reads/writes here
+      - ./cratedigger:/opt/cratedigger      # Our Python package available to Spark jobs
+
+  # ── Spark worker ──────────────────────────────────────────────────────────
+  # Does the actual computation. In production you'd run many workers.
+  # Locally one worker is enough — it'll use multiple CPU cores.
+  spark-worker:
+    image: apache/spark:latest
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    environment:
+      SPARK_WORKER_MEMORY: 2g    # RAM allocated to this worker
+      SPARK_WORKER_CORES: "2"    # CPU cores allocated
+      SPARK_WORKER_WEBUI_PORT: "8082"
+    ports:
+      - "8082:8082"   # Worker UI
+    volumes:
+      - ./spark_jobs:/opt/spark_jobs
+      - ./data:/opt/data
+      - ./cratedigger:/opt/cratedigger
+    depends_on:
+      - spark-master
 
 volumes:
   postgres_data:    # Named volume — Docker manages this, data survives container restarts
