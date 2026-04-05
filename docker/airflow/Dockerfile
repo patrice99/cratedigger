@@ -1,4 +1,4 @@
-FROM apache/airflow:2.8.1-python3.11
+FROM apache/airflow:3.1.8-python3.11
 
 # Install our Python dependencies on top of the official image
 # We do this in the Dockerfile rather than at runtime so the image

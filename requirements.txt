@@ -1,11 +1,11 @@
 # Airflow providers
-apache-airflow-providers-postgres==5.10.0
-apache-airflow-providers-http==4.9.0
+apache-airflow-providers-postgres==6.6.2
+apache-airflow-providers-http==6.0.1
 
 # API clients
-spotipy==2.23.0          # Spotify API wrapper
-pylast==5.2.0            # Last.fm API wrapper
+spotipy==2.26.0          # Spotify API wrapper
+pylast==7.0.2            # Last.fm API wrapper
 
 # Data
-pandas==2.1.4
-requests==2.31.0
+pandas==3.0.2
+requests==2.33.1
